@@ -1,16 +1,33 @@
 import numpy
+import os
+import pickle
 
-A = numpy.zeros((5,5))
-E = ['eat', 'go', 'food', 'class', 'chick-fil-a']
-H = ['directions', 'hours', 'menu', 'recommendations']
-evidenceMatrix = None
-probabilityVector = {}
-N = {}
-x = {}
+PICKLE_FILE = "inference.p"
+
+if not os.path.isfile(PICKLE_FILE):
+    A = numpy.zeros((5,5))
+    E = ['eat', 'go', 'food', 'class', 'chick-fil-a']
+    H = ['directions', 'hours', 'menu', 'recommendations']
+    evidenceMatrix = None
+    probabilityVector = {}
+    N = {}
+    x = {}
+    dataDict = {}
+else:
+    dataDict = pickle.load(open(PICKLE_FILE, "rb"))
+    A = dataDict['A']
+    E = dataDict['E']
+    H = dataDict['H']
+    evidenceMatrix = dataDict['EM']
+    probabilityVector = dataDict['PV']
+    N = dataDict['N']
+    x = dataDict['x']
+    
+# Main Program
 
 def getInputVector():
     global A, E, H
-    query = raw_input("Please enter a query: ")
+    query = raw_input("Please enter a query (enter to finish): ")
     query = query.split()
     vector = numpy.zeros((A.shape[0], 1))
     for word in query:
@@ -57,9 +74,18 @@ def setProbability(row, index):
 
 def updateEvidenceMatrix(inputVector):
     global H, evidenceMatrix
+    inputHash = vectorHash(inputVector)
+    
+    update = False
+
     if evidenceMatrix != None:
+        for i in range(0, evidenceMatrix.shape[0]):
+            if matrixHash(evidenceMatrix[i]) == inputHash:
+                update = True
+    
+    if evidenceMatrix != None and not update:
         evidenceMatrix = numpy.vstack((evidenceMatrix, inputVector))
-    else:
+    elif not update:
         probabilityVector[0] = 0.0
         probabilityVector[1] = 1.0
         emptyMatrix = numpy.zeros((2, inputVector.shape[1]))
@@ -67,9 +93,8 @@ def updateEvidenceMatrix(inputVector):
         allOnes = numpy.zeros((1, inputVector.shape[1]))
         allOnes.fill(1)
         emptyMatrix = numpy.vstack((emptyMatrix, allOnes))
-        evidenceMatrix = numpy.matrix(emptyMatrix)        
+        evidenceMatrix = numpy.matrix(emptyMatrix)       
     
-    inputHash = vectorHash(inputVector)
     for i in range(0, evidenceMatrix.shape[0]):
         if matrixHash(evidenceMatrix[i]) == inputHash:
             setProbability(evidenceMatrix[i], i)
@@ -77,13 +102,17 @@ def updateEvidenceMatrix(inputVector):
 
 
 # Get input
-for i in range(0, 3):
+keepLooping = True
+while keepLooping:
     inputVector = getInputVector()
-    updateEvidenceMatrix(inputVector)
-    print (evidenceMatrix)
-    for hypothesis in H:
-        print (hypothesis + ": ")
-        print (probabilityVector[hypothesis])
+    if numpy.sum(inputVector) > 0:
+        updateEvidenceMatrix(inputVector)
+        print (evidenceMatrix)
+        for hypothesis in H:
+            print (hypothesis + ": ")
+            print (probabilityVector[hypothesis])
+    else:
+        keepLooping = False
 
 # Solve system
 for hypothesis in H:
@@ -93,21 +122,42 @@ for hypothesis in H:
     print (x[hypothesis])
 
 # Generate test example
-checkVector = getInputVector()
+print ("Enter a different query to check: ")
+keepAsking = True
+while keepAsking:
+    checkVector = getInputVector()
 
-resultVector = numpy.zeros((len(H), 1))
-for index, hypothesis in enumerate(H):
-    resultVector[index] = checkVector * x[hypothesis]
+    if numpy.sum(checkVector) > 0:
+        resultVector = numpy.zeros((len(H), 1))
+        for index, hypothesis in enumerate(H):
+            resultVector[index] = checkVector * x[hypothesis]
     
     
-# Make Positive
-if numpy.min(resultVector) < 0:
-    resultVector += -numpy.min(resultVector)
+        # Make Positive
+        if numpy.min(resultVector) < 0:
+            resultVector += -numpy.min(resultVector)
 
-# Normalize
-resultVector /= numpy.linalg.norm(resultVector)
+        # Normalize
+        if numpy.linalg.norm(resultVector) != 0:
+            resultVector /= numpy.linalg.norm(resultVector)
 
-print (resultVector)
+        print (resultVector)
+    else:
+        keepAsking = False
+
+# Pickle the data
+
+dataDict['A'] = A
+dataDict['E'] = E
+dataDict['H'] = H
+dataDict['EM'] = evidenceMatrix
+dataDict['PV'] = probabilityVector
+dataDict['N'] = N
+dataDict['x'] = x
+
+pickle.dump(dataDict, open(PICKLE_FILE, "wb"))
+
+
 
 
 
