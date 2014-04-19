@@ -156,10 +156,3 @@ dataDict['N'] = N
 dataDict['x'] = x
 
 pickle.dump(dataDict, open(PICKLE_FILE, "wb"))
-
-
-
-
-
-    
-    
