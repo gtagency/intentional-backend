@@ -102,11 +102,21 @@ def updateEvidenceMatrix(inputVector):
 
 
 def addHypothesis():
+    global H, evidenceMatrix
     newHypothesis = raw_input("Enter a new hypothesis: ")
+    if not newHypothesis:
+        return False
     H.append(newHypothesis)
     evidenceMatrix = numpy.hstack((evidenceMatrix, numpy.zeros((evidenceMatrix.shape[0], 1))))
+    return True
 
 # Get input
+loopHypothesis = True
+while loopHypothesis:
+    loopHypothesis = addHypothesis()
+
+
+
 keepLooping = True
 while keepLooping:
     inputVector = getInputVector()
@@ -119,7 +129,11 @@ while keepLooping:
 for hypothesis in H:
     leftSide = numpy.transpose(evidenceMatrix) * evidenceMatrix
     rightSide = numpy.transpose(evidenceMatrix) * probabilityVector[hypothesis]
-    x[hypothesis] = numpy.linalg.inv(leftSide) * (rightSide)
+    try:
+        x[hypothesis] = numpy.linalg.inv(leftSide) * (rightSide)
+    except numpy.linalg.LinAlgError:
+        print ("Not enough data to solve system!")
+        break
 
 # Generate test example
 print ("Enter a different query to check: ")
