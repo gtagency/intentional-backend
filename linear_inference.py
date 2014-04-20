@@ -101,6 +101,11 @@ def updateEvidenceMatrix(inputVector):
             break
 
 
+def addHypothesis():
+    newHypothesis = raw_input("Enter a new hypothesis: ")
+    H.append(newHypothesis)
+    evidenceMatrix = numpy.hstack((evidenceMatrix, numpy.zeros((evidenceMatrix.shape[0], 1))))
+
 # Get input
 keepLooping = True
 while keepLooping:
