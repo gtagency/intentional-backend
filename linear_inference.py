@@ -107,10 +107,6 @@ while keepLooping:
     inputVector = getInputVector()
     if numpy.sum(inputVector) > 0:
         updateEvidenceMatrix(inputVector)
-        print (evidenceMatrix)
-        for hypothesis in H:
-            print (hypothesis + ": ")
-            print (probabilityVector[hypothesis])
     else:
         keepLooping = False
 
@@ -119,7 +115,6 @@ for hypothesis in H:
     leftSide = numpy.transpose(evidenceMatrix) * evidenceMatrix
     rightSide = numpy.transpose(evidenceMatrix) * probabilityVector[hypothesis]
     x[hypothesis] = numpy.linalg.inv(leftSide) * (rightSide)
-    print (x[hypothesis])
 
 # Generate test example
 print ("Enter a different query to check: ")
@@ -131,7 +126,6 @@ while keepAsking:
         resultVector = numpy.zeros((len(H), 1))
         for index, hypothesis in enumerate(H):
             resultVector[index] = checkVector * x[hypothesis]
-    
     
         # Make Positive
         if numpy.min(resultVector) < 0:
